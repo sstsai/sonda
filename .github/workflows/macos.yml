@@ -1,4 +1,5 @@
 name: macos_ci
+on: push
 jobs:
   build:
     runs-on: macos-11.0

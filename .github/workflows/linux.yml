@@ -1,4 +1,5 @@
 name: linux_ci
+on: push
 jobs:
   build:
     runs-on: ubuntu-latest
