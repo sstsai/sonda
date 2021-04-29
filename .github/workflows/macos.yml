@@ -12,7 +12,7 @@ jobs:
       - uses: lukka/get-cmake@latest
       # Setup vcpkg
       - name: Restore from cache and run vcpkg
-        uses: lukka/run-vcpkg@latest
+        uses: lukka/run-vcpkg@v7
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           setupOnly: true 
