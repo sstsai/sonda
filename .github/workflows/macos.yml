@@ -1,0 +1,21 @@
+name: macos_ci
+jobs:
+  build:
+    runs-on: macos-11.0
+    steps:
+      # get latest code and submodules
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      # install the latest cmake and ninja
+      - uses: lukka/get-cmake@latest
+      # Setup vcpkg
+      - name: Restore from cache and run vcpkg
+        uses: lukka/run-vcpkg@latest
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          setupOnly: true 
+      - name: 'Configure and build'
+        run: |
+          cmake --preset linux-release
+          cmake --build --preset linux-release-rebuild

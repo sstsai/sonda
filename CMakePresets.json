@@ -1,0 +1,136 @@
+﻿{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "ninja-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      }
+    },
+    {
+      "name": "vcpkg-base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": {
+          "type": "FILEPATH",
+          "value": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+      },
+      "environment": {
+        "VCPKG_FEATURE_FLAGS": "manifests,versions,binarycaching,registries"
+      }
+    },
+    {
+      "name": "linux-debug",
+      "displayName": "Linux Debug",
+      "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
+      "inherits": [ "ninja-base", "vcpkg-base" ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc-10",
+        "CMAKE_CXX_COMPILER": "g++-10"
+      },
+      "vendor": {
+        "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Linux" ] },
+        "microsoft.com/VisualStudioRemoteSettings/CMake/1.0": { "sourceDir": "$env{HOME}/.vs/$ms{projectDirName}" }
+      }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-debug",
+      "displayName": "Windows x64 Debug",
+      "description": "Target Windows with the Visual Studio development environment.",
+      "inherits": [ "ninja-base", "vcpkg-base" ],
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      },
+      "vendor": { "microsoft.com/VisualStudioSettings/CMake/1.0": { "hostOS": [ "Windows" ] } }
+    },
+    {
+      "name": "windows-release",
+      "displayName": "Windows x64 Release",
+      "description": "Target Windows with the Visual Studio development environment.",
+      "inherits": "windows-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-debug-build",
+      "configurePreset": "linux-debug",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "linux-debug-rebuild",
+      "configurePreset": "linux-debug",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "linux-release-build",
+      "configurePreset": "linux-release",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "linux-release-rebuild",
+      "configurePreset": "linux-release",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "windows-debug-build",
+      "configurePreset": "windows-debug",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "windows-debug-rebuild",
+      "configurePreset": "windows-debug",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "windows-release-build",
+      "configurePreset": "windows-release",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "windows-release-rebuild",
+      "configurePreset": "windows-release",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    }
+  ]
+}
