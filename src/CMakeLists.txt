@@ -11,7 +11,7 @@ target_compile_definitions(sonda
     _USE_MATH_DEFINES
 )
 target_compile_features(sonda PUBLIC cxx_std_20)
-target_link_libraries(sonda PRIVATE volk::volk_headers)
+target_link_libraries(sonda PRIVATE imgui::vulkan)
 
 if (WIN32)
   target_compile_definitions(sonda
