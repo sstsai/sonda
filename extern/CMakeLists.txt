@@ -1,4 +1,12 @@
+set(BUILD_SHARED_LIBS  OFF)
+set(GLFW_BUILD_EXAMPLES  OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_INSTALL OFF)
+set(GLFW_VULKAN_STATIC OFF)
+add_subdirectory(glfw)
 add_subdirectory(vulkan-headers)
+
 # volk
 add_library(volk_headers INTERFACE)
 add_library(volk::volk_headers ALIAS volk_headers)
@@ -6,10 +14,11 @@ target_include_directories(volk_headers INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/volk>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(volk_headers INTERFACE Vulkan::Headers)
 if (NOT WIN32)
   target_link_libraries(volk_headers INTERFACE dl)
 endif()
+target_link_libraries(volk_headers INTERFACE Vulkan::Headers)
+
 # imgui
 add_library(imgui)
 add_library(imgui::imgui ALIAS imgui)
@@ -59,7 +68,14 @@ target_include_directories(imgui_vulkan PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends>
   $<INSTALL_INTERFACE:include>
 )
-target_compile_definitions(imgui_vulkan PUBLIC GLFW_INCLUDE_VULKAN
-                                               GLFW_INCLUDE_NONE)
+target_compile_definitions(imgui_vulkan
+  PUBLIC
+    IMGUI_IMPL_VULKAN_NO_PROTOTYPES
+    VK_NO_PROTOTYPES
+    GLFW_INCLUDE_VULKAN
+    GLFW_INCLUDE_NONE
+  PRIVATE
+    IMGUI_USER_CONFIG=<volk.h>
+)
 target_link_libraries(imgui_vulkan PUBLIC imgui volk::volk_headers)
 
