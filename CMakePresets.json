@@ -30,6 +30,24 @@
       }
     },
     {
+      "name": "mac-debug",
+      "displayName": "Mac Debug",
+      "inherits": [ "ninja-base", "vcpkg-base" ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang-12",
+        "CMAKE_CXX_COMPILER": "clang++-12"
+      }
+    },
+    {
+      "name": "mac-release",
+      "displayName": "Mac Release",
+      "inherits": "mac-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
       "name": "linux-debug",
       "displayName": "Linux Debug",
       "description": "Target the Windows Subsystem for Linux (WSL) or a remote Linux system.",
@@ -80,6 +98,32 @@
     }
   ],
   "buildPresets": [
+    {
+      "name": "mac-debug-build",
+      "configurePreset": "mac-debug",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "mac-debug-rebuild",
+      "configurePreset": "mac-debug",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "mac-release-build",
+      "configurePreset": "mac-release",
+      "inheritConfigureEnvironment": true,
+      "nativeToolOptions": [ "-v" ]
+    },
+    {
+      "name": "mac-release-rebuild",
+      "configurePreset": "mac-release",
+      "inheritConfigureEnvironment": true,
+      "cleanFirst": true,
+      "nativeToolOptions": [ "-v" ]
+    },
     {
       "name": "linux-debug-build",
       "configurePreset": "linux-debug",
