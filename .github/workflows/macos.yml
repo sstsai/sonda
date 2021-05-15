@@ -2,7 +2,7 @@ name: macos_ci
 on: push
 jobs:
   build:
-    runs-on: macos-11.0
+    runs-on: macos-latest
     steps:
       # get latest code and submodules
       - uses: actions/checkout@v2
