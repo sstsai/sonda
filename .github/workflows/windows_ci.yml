@@ -16,6 +16,7 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           setupOnly: true 
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: 'Configure and build'
         run: |
           cmake --preset windows-release
