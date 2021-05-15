@@ -16,6 +16,12 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           setupOnly: true 
+      - name: 'Update apt' 
+        shell: 'bash'
+        run: 'sudo apt-get update'
+      - name: 'Apt dependencies'
+        shell: 'bash'
+        run: 'sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev'
       - name: 'Configure and build'
         run: |
           cmake --preset linux-release
