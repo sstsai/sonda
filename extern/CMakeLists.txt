@@ -14,6 +14,7 @@ target_include_directories(volk_headers INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/volk>
   $<INSTALL_INTERFACE:include>
 )
+target_compile_definitions(volk_headers INTERFACE VK_NO_PROTOTYPES)
 if (NOT WIN32)
   target_link_libraries(volk_headers INTERFACE dl)
 endif()
@@ -71,7 +72,6 @@ target_include_directories(imgui_vulkan PUBLIC
 target_compile_definitions(imgui_vulkan
   PUBLIC
     IMGUI_IMPL_VULKAN_NO_PROTOTYPES
-    VK_NO_PROTOTYPES
     GLFW_INCLUDE_VULKAN
     GLFW_INCLUDE_NONE
   PRIVATE
