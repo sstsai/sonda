@@ -1,18 +1,6 @@
-#include "gui.h"
-#if defined(_WIN32)
-#define VK_USE_PLATFORM_WIN32_KHR
-#elif defined(__linux__) || defined(__unix__)
-#define VK_USE_PLATFORM_XLIB_KHR
-#elif defined(__APPLE__)
-#define VK_USE_PLATFORM_MACOS_MVK
-#else
-#error "Platform not supported."
-#endif
-
 #define VOLK_IMPLEMENTATION
-#include <volk.h>
-#include <GLFW/glfw3.h>
-#include <vulkan/vulkan.hpp>
+#include "gui.h"
+#include "glfw_vulkan.h"
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
@@ -360,6 +348,98 @@ private:
             (wd->SemaphoreIndex + 1) %
             wd->ImageCount; // Now we can use the next set of semaphores
     }
+    static auto vk_resize()
+    {
+        // Create SwapChain, RenderPass, Framebuffer, etc.
+        // IM_ASSERT(g_MinImageCount >= 2);
+        // ImGui_ImplVulkanH_CreateOrResizeWindow(
+        //    g_Instance, g_PhysicalDevice, g_Device, wd, g_QueueFamily,
+        //    g_Allocator, width, height, g_MinImageCount);
+    }
+    static auto vk_swap(vk::PhysicalDevice physical_device, vk::Device device,
+                        vk::SurfaceKHR surface, int width, int height)
+    {
+        auto caps = physical_device.getSurfaceCapabilitiesKHR(surface);
+        auto form = vk_select_surface_format(physical_device, surface);
+        device.waitIdle();
+        device.createSwapchainKHRUnique(vk::SwapchainCreateInfoKHR{
+            {},
+            surface,
+            vk_min_image(vk_present_mode(physical_device, surface), caps),
+            form.format,
+            form.colorSpace,
+            vk_extent(width, height, caps),
+        });
+    }
+    static auto vk_extent(uint32_t width, uint32_t height,
+                          vk::SurfaceCapabilitiesKHR surface_capabilities)
+        -> vk::Extent2D
+    {
+        if (surface_capabilities.currentExtent.width == 0xFFFFFFFF &&
+            surface_capabilities.currentExtent.height == 0xFFFFFFFF)
+            return {width, height};
+        return surface_capabilities.currentExtent;
+    }
+    static auto vk_min_image(vk::PresentModeKHR present_mode,
+                             vk::SurfaceCapabilitiesKHR surface_capabilities)
+        -> uint32_t
+    {
+        uint32_t min_images;
+        switch (present_mode) {
+        case vk::PresentModeKHR::eMailbox:
+            min_images = 3;
+            break;
+        case vk::PresentModeKHR::eFifo:
+        case vk::PresentModeKHR::eFifoRelaxed:
+            min_images = 2;
+            break;
+        case vk::PresentModeKHR::eImmediate:
+        default:
+            min_images = 1;
+            break;
+        }
+        if (surface_capabilities.maxImageCount >=
+            surface_capabilities.minImageCount)
+            return std::clamp(min_images, surface_capabilities.minImageCount,
+                              surface_capabilities.maxImageCount);
+        return std::clamp(min_images, surface_capabilities.minImageCount,
+                          min_images);
+    }
+    static auto vk_present_mode(vk::PhysicalDevice physical_device,
+                                vk::SurfaceKHR surface) -> vk::PresentModeKHR
+    {
+        constexpr std::array<vk::PresentModeKHR, 2> present_modes = {
+            vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
+        auto const &modes = physical_device.getSurfacePresentModesKHR(surface);
+        for (auto const &mode : present_modes)
+            if (std::find(modes.begin(), modes.end(), mode) != modes.end())
+                return mode;
+        return vk::PresentModeKHR::eFifo;
+    }
+    static auto vk_select_surface_format(vk::PhysicalDevice physical_device,
+                                         vk::SurfaceKHR surface)
+        -> vk::SurfaceFormatKHR
+    {
+        for (auto const &format :
+             physical_device.getSurfaceFormatsKHR(surface)) {
+            if (format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+                switch (format.format) {
+                case vk::Format::eB8G8R8A8Unorm:
+                case vk::Format::eR8G8B8A8Unorm:
+                case vk::Format::eB8G8R8Unorm:
+                case vk::Format::eR8G8B8Unorm:
+                    return format;
+                }
+            }
+        }
+        return vk::SurfaceFormatKHR();
+    }
+    static auto vk_check_surface_support(vk::PhysicalDevice physical_device,
+                                         uint32_t queue_family,
+                                         vk::SurfaceKHR surface) -> bool
+    {
+        return physical_device.getSurfaceSupportKHR(queue_family, surface);
+    }
     static auto vk_pool(vk::Device device) -> vk::UniqueDescriptorPool
     {
         std::array<vk::DescriptorPoolSize, 11> pool_sizes = {
@@ -471,48 +551,18 @@ private:
         return VK_FALSE;
     }
 };
-struct imgui_glfw {
-private:
-    GLFWwindow *window;
-
-public:
-    imgui_glfw()
-    {
-        // if (volkInitialize() != VK_SUCCESS)
-        //    throw std::runtime_error("volkInitialize failure");
-        // Setup GLFW window
-        glfwSetErrorCallback(glfw_error_callback);
-        if (!glfwInit())
-            throw std::runtime_error("glfwInit failure");
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+Vulkan example",
-                                  NULL, NULL);
-    }
-    ~imgui_glfw()
-    {
-        glfwDestroyWindow(window);
-        glfwTerminate();
-    }
-    GLFWwindow *win() const { return window; }
-
-private:
-    static void glfw_error_callback(int error, const char *description)
-    {
-        fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-    }
-};
-
 namespace gui {
 struct app::impl {
-    imgui_glfw glfw = imgui_glfw();
-    imgui_vulkan vulkan = imgui_vulkan(glfw.win());
+    glfw::instance glfw_instance = glfw::instance();
+    glfw::window glfw_window =
+        glfw_instance.make_window(glfw::client_api{glfw::api::none});
+    imgui_vulkan vulkan = imgui_vulkan(glfw_window);
 };
 app::app() : impl_(std::make_unique<impl>()) {}
 app::~app() = default;
 bool app::should_close() const
 {
-    return glfwWindowShouldClose(impl_->glfw.win());
+    return impl_->glfw_window.should_close();
 }
 
 struct frame::impl {
@@ -521,7 +571,7 @@ struct frame::impl {
     ImVec4 clear_color;
 };
 frame::frame(app const &a, ImVec4 clear_color)
-    : impl_(std::make_unique<impl>(a.impl_->vulkan, a.impl_->glfw.win(),
+    : impl_(std::make_unique<impl>(a.impl_->vulkan, a.impl_->glfw_window,
                                    clear_color))
 {
     glfwPollEvents();

@@ -15,6 +15,13 @@ target_include_directories(volk_headers INTERFACE
   $<INSTALL_INTERFACE:include>
 )
 target_compile_definitions(volk_headers INTERFACE VK_NO_PROTOTYPES)
+if (WIN32)
+  target_compile_definitions(volk_headers INTERFACE VK_USE_PLATFORM_WIN32_KHR)
+elseif(APPLE)
+  target_compile_definitions(volk_headers INTERFACE VK_USE_PLATFORM_MACOS_MVK)
+elseif(UNIX)
+  target_compile_definitions(volk_headers INTERFACE VK_USE_PLATFORM_XLIB_KHR)
+endif()
 if (NOT WIN32)
   target_link_libraries(volk_headers INTERFACE dl)
 endif()
