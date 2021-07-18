@@ -1,6 +1,7 @@
 #include "gui.h"
 #include "glfw_vulkan.h"
 #include "logger.h"
+#include <ranges>
 struct test {
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -68,25 +69,10 @@ struct test {
 
 int main(int ac, char **av)
 {
-    logger log;
-    auto glfw_cb = glfw::error_callback(log);
-    {
-        auto glfw_instance = glfw::instance();
-        auto glfw_win = glfw::window(glfw_instance.make_window());
-        glfw::vulkan::load(glfw_instance.instance_proc_address());
-        auto e = glfw::vulkan::prefer(
-            glfw::vulkan::extensions{
-                glfw_instance.required_instance_extensions()},
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        auto l = glfw::vulkan::prefer(glfw::vulkan::layers(),
-                                      glfw::vulkan::validation_layer);
-        auto vk_instance =
-            vk::createInstanceUnique(vk::InstanceCreateInfo()
-                                         .setPEnabledLayerNames(l.value)
-                                         .setPEnabledExtensionNames(e.value));
-        volkLoadInstance(*vk_instance);
-        VULKAN_HPP_DEFAULT_DISPATCHER.init(*vk_instance);
-        auto vulkan_cb = glfw::vulkan::error_callback(*vk_instance, log);
+    if (true) {
+        logger log;
+        auto a = app(log);
+        return 0;
     }
     auto app = gui::app();
     auto t = test();

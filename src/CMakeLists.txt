@@ -1,10 +1,12 @@
 add_executable(sonda "")
 target_sources(sonda
-  PUBLIC
-    "gui.h"
   PRIVATE
     "main.cpp"
     "gui.cpp"
+  PUBLIC
+    "gui.h"
+    "logger.h"
+    "strong_type.h"
 )
 target_link_libraries(sonda
   PRIVATE

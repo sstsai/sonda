@@ -1,101 +1,107 @@
 #pragma once
+#include "strong_type.h"
 #include <volk.h>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.hpp>
 #include <memory>
 #include <vector>
 #include <concepts>
+#include <ranges>
+#include <cassert>
 namespace glfw {
 template <class From, class To>
 concept constructible_to = requires(std::add_rvalue_reference_t<From> (&f)())
 {
     static_cast<To>(f());
 };
-template <typename T> concept HintKey = requires(T a)
+template <typename T>
+concept HintKey = requires(T a)
 {
     {
         a.key
-    }
-    ->std::convertible_to<int>;
+        } -> std::convertible_to<int>;
 };
-template <typename T> concept HintValueInt = requires(T a)
+template <typename T>
+concept HintValueInt = requires(T a)
 {
     {
         a.value
-    }
-    ->constructible_to<int>;
+        } -> constructible_to<int>;
 };
-template <typename T> concept HintValueString = requires(T a)
+template <typename T>
+concept HintValueString = requires(T a)
 {
     {
         a.value
-    }
-    ->std::convertible_to<char const *>;
+        } -> std::convertible_to<char const *>;
 };
 template <typename T>
-concept InitHint = HintKey<T> &&T::key > 0x00050000 && HintValueInt<T>;
+concept InitHint = HintKey<T> && T::key >
+0x00050000 && HintValueInt<T>;
 template <typename T>
-concept WindowHint = HintKey<T> &&T::key < 0x00050000 &&
+concept WindowHint = HintKey<T> && T::key < 0x00050000 &&
                      (HintValueInt<T> || HintValueString<T>);
 template <typename T>
 concept ErrorHandler = std::invocable<T, int, char const *>;
-namespace detail {
-template <auto Key, typename T, auto Default> struct key_value {
-    static constexpr auto key = Key;
-    T value = Default;
-};
-template <auto Key> struct key_value_s {
-    static constexpr auto key = Key;
-    char const *value = "";
-};
-enum class create_window_params { width, height, title, monitor, share };
-template <typename T> concept WindowParam = requires(T a)
+namespace detail
 {
+    template <auto Key, typename T, auto Default> struct key_value {
+        static constexpr auto key = Key;
+        T value = Default;
+    };
+    template <auto Key> struct key_value_s {
+        static constexpr auto key = Key;
+        char const *value = "";
+    };
+    enum class create_window_params { width, height, title, monitor, share };
+    template <typename T>
+    concept WindowParam = requires(T a)
     {
-        a.key
-    }
-    ->std::convertible_to<create_window_params>;
-};
-template <typename T> concept WindowArg = WindowHint<T> || WindowParam<T>;
-struct release_instance {
-    using pointer = int;
-    void operator()(pointer) const { glfwTerminate(); }
-};
-using instance = std::unique_ptr<void, release_instance>;
-struct destroy_window {
-    using pointer = GLFWwindow *;
-    void operator()(pointer p) const { glfwDestroyWindow(p); }
-};
-using window = std::unique_ptr<void, destroy_window>;
-struct params {
-    int width = 640;
-    int height = 480;
-    char const *title = "";
-    GLFWmonitor *monitor = nullptr;
-    GLFWwindow *share = nullptr;
-};
-void setup_window(params &p, WindowArg auto &&arg)
-{
-    if constexpr (WindowParam<decltype(arg)>) {
-        if constexpr (arg.key == create_window_params::width) {
-            p.width = arg.value;
-        } else if constexpr (arg.key == create_window_params::height) {
-            p.height = arg.value;
-        } else if constexpr (arg.key == create_window_params::title) {
-            p.title = arg.value;
-        } else if constexpr (arg.key == create_window_params::monitor) {
-            p.monitor = arg.value;
-        } else if constexpr (arg.key == create_window_params::share) {
-            p.share = arg.value;
+        {
+            a.key
+            } -> std::convertible_to<create_window_params>;
+    };
+    template <typename T>
+    concept WindowArg = WindowHint<T> || WindowParam<T>;
+    struct release_instance {
+        using pointer = int;
+        void operator()(pointer) const { glfwTerminate(); }
+    };
+    using instance = std::unique_ptr<void, release_instance>;
+    struct destroy_window {
+        using pointer = GLFWwindow *;
+        void operator()(pointer p) const { glfwDestroyWindow(p); }
+    };
+    using window = std::unique_ptr<void, destroy_window>;
+    struct params {
+        int width = 640;
+        int height = 480;
+        char const *title = "";
+        GLFWmonitor *monitor = nullptr;
+        GLFWwindow *share = nullptr;
+    };
+    void setup_window(params & p, WindowArg auto &&arg)
+    {
+        if constexpr (WindowParam<decltype(arg)>) {
+            if constexpr (arg.key == create_window_params::width) {
+                p.width = arg.value;
+            } else if constexpr (arg.key == create_window_params::height) {
+                p.height = arg.value;
+            } else if constexpr (arg.key == create_window_params::title) {
+                p.title = arg.value;
+            } else if constexpr (arg.key == create_window_params::monitor) {
+                p.monitor = arg.value;
+            } else if constexpr (arg.key == create_window_params::share) {
+                p.share = arg.value;
+            }
+        } else {
+            if constexpr (HintValueInt<decltype(arg)>) {
+                glfwWindowHint(arg.key, static_cast<int>(arg.value));
+            } else if constexpr (HintValueString<decltype(arg)>) {
+                glfwWindowHintString(arg.key, arg.value);
+            }
         }
-    } else {
-        if constexpr (HintValueInt<decltype(arg)>) {
-            glfwWindowHint(arg.key, static_cast<int>(arg.value));
-        } else if constexpr (HintValueString<decltype(arg)>) {
-            glfwWindowHintString(arg.key, arg.value);
-        }
     }
-}
 } // namespace detail
 inline namespace init_hint {
 using joystick_hat_buttons =
@@ -251,20 +257,20 @@ public:
         (..., glfwInitHint(hints.key, static_cast<int>(hints.value)));
         sys.reset(glfwInit());
     }
-    auto make_window(detail::WindowArg auto &&...args) -> GLFWwindow *
+    auto make_window(detail::WindowArg auto &&...args) const -> GLFWwindow *
     {
         detail::params p;
         glfwDefaultWindowHints();
         (..., detail::setup_window(p, std::forward<decltype(args)>(args)));
         return glfwCreateWindow(p.width, p.height, p.title, p.monitor, p.share);
     }
-    auto required_instance_extensions() -> std::vector<char const *>
+    auto required_instance_extensions() const -> std::vector<char const *>
     {
         uint32_t count;
         auto extensions = glfwGetRequiredInstanceExtensions(&count);
         return std::vector<char const *>(extensions, extensions + count);
     }
-    auto instance_proc_address() -> PFN_vkGetInstanceProcAddr
+    auto instance_proc_address() const -> PFN_vkGetInstanceProcAddr
     {
         return (PFN_vkGetInstanceProcAddr)glfwGetInstanceProcAddress(
             NULL, "vkGetInstanceProcAddr");
@@ -314,6 +320,7 @@ template <typename Fn>
 error_callback(vk::Instance, Fn &) -> error_callback<Fn &>;
 template <typename Fn>
 error_callback(vk::Instance, Fn &&) -> error_callback<Fn>;
+
 inline constexpr struct prefer_fn {
     template <typename T, typename... Args>
     constexpr auto operator()(T &&obj, Args &&...args) const
@@ -336,8 +343,8 @@ struct extensions {
 
 private:
     template <typename T, typename... Args>
-        requires std::same_as<T, extensions> &&
-        (... && std::convertible_to<Args, char const *>)friend auto tag_invoke(
+    requires std::same_as<T, extensions> &&
+        (... &&std::convertible_to<Args, char const *>)friend auto tag_invoke(
             prefer_fn, T &&e, Args &&...args)
     {
         auto match = [properties = vk::enumerateInstanceExtensionProperties()](
@@ -357,8 +364,8 @@ private:
         return e;
     }
     template <typename T, typename... Args>
-        requires std::same_as<T, extensions> &&
-        (... && std::convertible_to<Args, char const *>)friend auto tag_invoke(
+    requires std::same_as<T, extensions> &&
+        (... &&std::convertible_to<Args, char const *>)friend auto tag_invoke(
             require_fn, T &&e, Args &&...args)
     {
         auto push_back = [&](auto name) { e.value.push_back(name); };
@@ -371,8 +378,8 @@ struct layers {
 
 private:
     template <typename T, typename... Args>
-        requires std::same_as<T, layers> &&
-        (... && std::convertible_to<Args, char const *>)friend auto tag_invoke(
+    requires std::same_as<T, layers> &&
+        (... &&std::convertible_to<Args, char const *>)friend auto tag_invoke(
             prefer_fn, T &&l, Args &&...args)
     {
         auto match = [properties =
@@ -392,8 +399,8 @@ private:
         return l;
     }
     template <typename T, typename... Args>
-        requires std::same_as<T, layers> &&
-        (... && std::convertible_to<Args, char const *>)friend auto tag_invoke(
+    requires std::same_as<T, layers> &&
+        (... &&std::convertible_to<Args, char const *>)friend auto tag_invoke(
             require_fn, T &&l, Args &&...args)
     {
         auto push_back = [&](auto name) { l.value.push_back(name); };
@@ -426,23 +433,91 @@ inline void load(PFN_vkGetInstanceProcAddr addr = nullptr)
     }
     VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 }
-inline auto make_instance(vk::InstanceCreateInfo const &info)
-    -> vk::UniqueInstance
+inline auto instance(vk::InstanceCreateInfo &info, extensions const &e)
+    -> vk::InstanceCreateInfo &
 {
+    info.setPEnabledExtensionNames(e.value);
+    return info;
+}
+inline auto instance(vk::InstanceCreateInfo &info, layers const &l)
+    -> vk::InstanceCreateInfo &
+{
+    info.setPEnabledLayerNames(l.value);
+    return info;
+}
+template <typename... Ts>
+inline auto make_instance(Ts &&...ts) -> vk::UniqueInstance
+{
+    auto info = vk::InstanceCreateInfo{};
+    (..., instance(info, ts));
     auto instance = vk::createInstanceUnique(info);
     volkLoadInstance(*instance);
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
     return instance;
 }
+inline auto query(vk::PhysicalDevice const &device, std::string_view name) {
+    auto props = device.enumerateDeviceExtensionProperties();
+    for (auto const &prop : props) {
+    }
+}
+inline constexpr auto filter(vk::PhysicalDeviceType type)
+{
+    return [type](vk::PhysicalDevice device) {
+        return device.getProperties().deviceType == type;
+    };
+}
 } // namespace vulkan
 } // namespace glfw
-struct app {
+template <typename ErrorHandler> struct app {
 private:
-    glfw::instance gi = glfw::instance();
-    glfw::window gw =
-        glfw::window(gi.make_window(glfw::client_api{glfw::api::none}));
-    // vk::UniqueInstance vi = glfw::vulkan::make_instance(
-    //    gi.instance_proc_address(),
-    //    {}.setPEnabledLayerNames(glfw::vulkan::debug_layers()));
+    glfw::instance win_instance = glfw::instance();
+    glfw::window win = glfw::window(
+        win_instance.make_window(glfw::client_api{glfw::api::none}));
+    vk::UniqueInstance instance = debug_instance(win_instance);
+    vk::UniqueDevice device;
+    vk::UniqueSurfaceKHR surface;
+    glfw::error_callback<ErrorHandler> glfw_cb;
+    glfw::vulkan::error_callback<ErrorHandler> vk_cb;
+
 public:
+    app(ErrorHandler &handler) : glfw_cb(handler), vk_cb(*instance, handler)
+    {
+        auto devices = instance->enumeratePhysicalDevices();
+        for (auto &dev : devices | std::views::filter(glfw::vulkan::filter(
+                                       vk::PhysicalDeviceType::eDiscreteGpu))) {
+            auto props = dev.getQueueFamilyProperties();
+            auto index = uint32_t{0};
+            for (; index < props.size(); ++index) {
+                auto flags = props[index].queueFlags;
+                if (flags & vk::QueueFlagBits::eGraphics)
+                    break;
+            }
+            assert(index >= props.size());
+            auto queue_priority = std::array<float, 1>{1.0f};
+            auto device_extensions =
+                std::array<char const *, 1>{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+            auto queue_create_info = std::array<vk::DeviceQueueCreateInfo, 1>{
+                {{{}, index, queue_priority}}};
+            device = dev.createDeviceUnique(
+                {{}, queue_create_info, {}, device_extensions});
+            volkLoadDevice(*device);
+            VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
+
+            VkSurfaceKHR surf;
+            glfwCreateWindowSurface(*instance, win, nullptr, &surf);
+            surface = vk::UniqueSurfaceKHR(surf);
+        }
+    }
+
+private:
+    static auto debug_instance(glfw::instance const &instance)
+        -> vk::UniqueInstance
+    {
+        using namespace glfw::vulkan;
+        load(instance.instance_proc_address());
+        return make_instance(
+            prefer(extensions{instance.required_instance_extensions()},
+                   VK_EXT_DEBUG_UTILS_EXTENSION_NAME),
+            prefer(layers(), validation_layer));
+    }
 };
