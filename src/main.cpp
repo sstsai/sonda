@@ -1,6 +1,7 @@
 #include "gui.h"
 #include "glfw_vulkan.h"
 #include "logger.h"
+#include "mqtt.h"
 #include <ranges>
 struct test {
     bool show_demo_window = true;
@@ -66,9 +67,15 @@ struct test {
         }
     }
 };
+void test1()
+{
+    auto maybe_b = fmap([](int x) { return x * 2; }, []() { return 5; });
+    int a = 5;
+}
 
 int main(int ac, char **av)
 {
+    test1();
     if (true) {
         logger log;
         auto a = app(log);

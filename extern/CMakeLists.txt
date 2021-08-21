@@ -7,6 +7,14 @@ set(GLFW_VULKAN_STATIC OFF)
 add_subdirectory(glfw)
 add_subdirectory(vulkan-headers)
 
+# asio
+add_library(asio INTERFACE)
+add_library(asio::asio ALIAS asio)
+target_include_directories(asio INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/asio/asio/include>
+  $<INSTALL_INTERFACE:include>
+)
+
 # volk
 add_library(volk_headers INTERFACE)
 add_library(volk::volk_headers ALIAS volk_headers)

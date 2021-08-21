@@ -7,6 +7,8 @@ target_sources(sonda
     "gui.h"
     "logger.h"
     "strong_type.h"
+    "mqtt.h"
+    "fmap.h"
 )
 target_link_libraries(sonda
   PRIVATE
@@ -16,11 +18,12 @@ target_compile_definitions(sonda
     _USE_MATH_DEFINES
 )
 target_compile_features(sonda PUBLIC cxx_std_20)
-target_link_libraries(sonda PRIVATE imgui::vulkan imgui::glfw)
+target_link_libraries(sonda PRIVATE imgui::vulkan imgui::glfw asio::asio)
 
 if (WIN32)
   target_compile_definitions(sonda
     PUBLIC
+      WIN32_LEAN_AND_MEAN
       _CRT_SECURE_NO_WARNINGS
       _WIN32_WINNT=0x0601
   )
