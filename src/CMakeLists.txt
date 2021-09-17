@@ -9,6 +9,8 @@ target_sources(sonda
     "strong_type.h"
     "mqtt.h"
     "fmap.h"
+    "endian.h"
+    "bytes.h"
 )
 target_link_libraries(sonda
   PRIVATE
@@ -17,8 +19,8 @@ target_compile_definitions(sonda
   PUBLIC
     _USE_MATH_DEFINES
 )
-target_compile_features(sonda PUBLIC cxx_std_20)
-target_link_libraries(sonda PRIVATE imgui::vulkan imgui::glfw asio::asio)
+target_compile_features(sonda PUBLIC cxx_std_23)
+target_link_libraries(sonda PRIVATE imgui::vulkan imgui::glfw asio::asio Boost::describe)
 
 if (WIN32)
   target_compile_definitions(sonda

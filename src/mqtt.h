@@ -1,4 +1,6 @@
 #pragma once
+#include "bytes.h"
+#include "endian.h"
 #include <asio/ip/tcp.hpp>
 #include <asio/read_until.hpp>
 #include <asio/awaitable.hpp>
