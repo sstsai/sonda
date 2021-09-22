@@ -21,7 +21,7 @@ jobs:
         run: 'sudo apt-get update'
       - name: 'Apt dependencies'
         shell: 'bash'
-        run: 'sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev'
+        run: 'sudo apt install g++-11 libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev'
       - name: 'Configure and build'
         run: |
           cmake --preset linux-release

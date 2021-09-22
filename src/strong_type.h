@@ -8,7 +8,7 @@ concept Type = requires(T a)
     {
         a.value
     }
-    noexcept->std::same_as<T::value_type>;
+    noexcept->std::same_as<typename T::value_type>;
 };
 template <typename T>
 concept Addable = Type<T> && requires

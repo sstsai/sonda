@@ -128,7 +128,8 @@ struct match_message {
             return std::pair{begin, false};
         auto iter = begin;
         ++iter; // control byte
-        auto [value, iter] = parse_variable_integer(iter, end);
+        auto [value, rv] = parse_variable_integer(iter, end);
+        iter             = rv;
         if (value && std::distance(iter, end) >= *value) {
             std::advance(iter, *value);
             return {iter, true};

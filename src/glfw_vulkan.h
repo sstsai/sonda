@@ -46,12 +46,12 @@ concept ErrorHandler = std::invocable<T, int, char const *>;
 namespace detail
 {
     template <auto Key, typename T, auto Default> struct key_value {
-        static constexpr auto key = Key;
-        T value = Default;
+        static constexpr auto key   = Key;
+        T                     value = Default;
     };
     template <auto Key> struct key_value_s {
-        static constexpr auto key = Key;
-        char const *value = "";
+        static constexpr auto key   = Key;
+        char const *          value = "";
     };
     enum class create_window_params { width, height, title, monitor, share };
     template <typename T>
@@ -64,7 +64,20 @@ namespace detail
     template <typename T>
     concept WindowArg = WindowHint<T> || WindowParam<T>;
     struct release_instance {
-        using pointer = int;
+        struct pointer {
+            int x;
+            pointer(int t) : x(t) {}
+            pointer(std::nullptr_t = nullptr) : x(0) {}
+            explicit    operator bool() const { return !!x; }
+            friend bool operator==(pointer lhs, pointer rhs)
+            {
+                return lhs.x == rhs.x;
+            }
+            friend bool operator!=(pointer lhs, pointer rhs)
+            {
+                return lhs.x != rhs.x;
+            }
+        };
         void operator()(pointer) const { glfwTerminate(); }
     };
     using instance = std::unique_ptr<void, release_instance>;
@@ -74,11 +87,11 @@ namespace detail
     };
     using window = std::unique_ptr<void, destroy_window>;
     struct params {
-        int width = 640;
-        int height = 480;
-        char const *title = "";
+        int          width   = 640;
+        int          height  = 480;
+        char const * title   = "";
         GLFWmonitor *monitor = nullptr;
-        GLFWwindow *share = nullptr;
+        GLFWwindow * share   = nullptr;
     };
     void setup_window(params & p, WindowArg auto &&arg)
     {
@@ -114,48 +127,48 @@ inline namespace window_hint {
 using width = detail::key_value<detail::create_window_params::width, int, 640>;
 using height =
     detail::key_value<detail::create_window_params::height, int, 480>;
-using title = detail::key_value_s<detail::create_window_params::title>;
-using monitor = detail::key_value<detail::create_window_params::monitor,
+using title         = detail::key_value_s<detail::create_window_params::title>;
+using monitor       = detail::key_value<detail::create_window_params::monitor,
                                   GLFWmonitor *, nullptr>;
-using share = detail::key_value<detail::create_window_params::share,
+using share         = detail::key_value<detail::create_window_params::share,
                                 GLFWwindow *, nullptr>;
-using resizable = detail::key_value<GLFW_RESIZABLE, bool, true>;
-using visible = detail::key_value<GLFW_VISIBLE, bool, true>;
-using decorated = detail::key_value<GLFW_DECORATED, bool, true>;
-using focused = detail::key_value<GLFW_FOCUSED, bool, true>;
-using auto_iconify = detail::key_value<GLFW_AUTO_ICONIFY, bool, true>;
-using floating = detail::key_value<GLFW_FLOATING, bool, false>;
-using maximized = detail::key_value<GLFW_MAXIMIZED, bool, false>;
+using resizable     = detail::key_value<GLFW_RESIZABLE, bool, true>;
+using visible       = detail::key_value<GLFW_VISIBLE, bool, true>;
+using decorated     = detail::key_value<GLFW_DECORATED, bool, true>;
+using focused       = detail::key_value<GLFW_FOCUSED, bool, true>;
+using auto_iconify  = detail::key_value<GLFW_AUTO_ICONIFY, bool, true>;
+using floating      = detail::key_value<GLFW_FLOATING, bool, false>;
+using maximized     = detail::key_value<GLFW_MAXIMIZED, bool, false>;
 using center_cursor = detail::key_value<GLFW_CENTER_CURSOR, bool, true>;
 using transparent_framebuffer =
     detail::key_value<GLFW_TRANSPARENT_FRAMEBUFFER, bool, false>;
-using focus_on_show = detail::key_value<GLFW_FOCUS_ON_SHOW, bool, true>;
+using focus_on_show    = detail::key_value<GLFW_FOCUS_ON_SHOW, bool, true>;
 using scale_to_monitor = detail::key_value<GLFW_SCALE_TO_MONITOR, bool, false>;
-using red_bits = detail::key_value<GLFW_RED_BITS, int, 8>;
-using green_bits = detail::key_value<GLFW_GREEN_BITS, int, 8>;
-using blue_bits = detail::key_value<GLFW_BLUE_BITS, int, 8>;
-using alpha_bits = detail::key_value<GLFW_ALPHA_BITS, int, 8>;
-using depth_bits = detail::key_value<GLFW_DEPTH_BITS, int, 24>;
-using stencil_bits = detail::key_value<GLFW_STENCIL_BITS, int, 8>;
-using accum_red_bits = detail::key_value<GLFW_ACCUM_RED_BITS, int, 0>;
+using red_bits         = detail::key_value<GLFW_RED_BITS, int, 8>;
+using green_bits       = detail::key_value<GLFW_GREEN_BITS, int, 8>;
+using blue_bits        = detail::key_value<GLFW_BLUE_BITS, int, 8>;
+using alpha_bits       = detail::key_value<GLFW_ALPHA_BITS, int, 8>;
+using depth_bits       = detail::key_value<GLFW_DEPTH_BITS, int, 24>;
+using stencil_bits     = detail::key_value<GLFW_STENCIL_BITS, int, 8>;
+using accum_red_bits   = detail::key_value<GLFW_ACCUM_RED_BITS, int, 0>;
 using accum_green_bits = detail::key_value<GLFW_ACCUM_GREEN_BITS, int, 0>;
-using accum_blue_bits = detail::key_value<GLFW_ACCUM_BLUE_BITS, int, 0>;
+using accum_blue_bits  = detail::key_value<GLFW_ACCUM_BLUE_BITS, int, 0>;
 using accum_alpha_bits = detail::key_value<GLFW_ACCUM_ALPHA_BITS, int, 0>;
-using aux_buffers = detail::key_value<GLFW_AUX_BUFFERS, int, 0>;
-using samples = detail::key_value<GLFW_SAMPLES, int, 0>;
+using aux_buffers      = detail::key_value<GLFW_AUX_BUFFERS, int, 0>;
+using samples          = detail::key_value<GLFW_SAMPLES, int, 0>;
 using refresh_rate = detail::key_value<GLFW_REFRESH_RATE, int, GLFW_DONT_CARE>;
-using stereo = detail::key_value<GLFW_STEREO, bool, false>;
+using stereo       = detail::key_value<GLFW_STEREO, bool, false>;
 using srgb_capable = detail::key_value<GLFW_SRGB_CAPABLE, bool, false>;
 using doublebuffer = detail::key_value<GLFW_DOUBLEBUFFER, bool, true>;
 enum class api {
-    opengl = GLFW_OPENGL_API,
+    opengl    = GLFW_OPENGL_API,
     opengl_es = GLFW_OPENGL_ES_API,
-    none = GLFW_NO_API
+    none      = GLFW_NO_API
 };
 using client_api = detail::key_value<GLFW_CLIENT_API, api, api::opengl>;
 enum class context_api {
     native = GLFW_NATIVE_CONTEXT_API,
-    egl = GLFW_EGL_CONTEXT_API,
+    egl    = GLFW_EGL_CONTEXT_API,
     osmesa = GLFW_OSMESA_CONTEXT_API
 };
 using context_creation_api =
@@ -166,10 +179,10 @@ using context_version_major =
 using context_version_minor =
     detail::key_value<GLFW_CONTEXT_VERSION_MINOR, int, 0>;
 enum class robustness {
-    none = GLFW_NO_ROBUSTNESS,
+    none                  = GLFW_NO_ROBUSTNESS,
     no_reset_notification = GLFW_NO_RESET_NOTIFICATION,
     lose_context_on_reset = GLFW_LOSE_CONTEXT_ON_RESET,
-    any_release_behavior = GLFW_ANY_RELEASE_BEHAVIOR
+    any_release_behavior  = GLFW_ANY_RELEASE_BEHAVIOR
 };
 using context_robustness =
     detail::key_value<GLFW_CONTEXT_ROBUSTNESS, robustness, robustness::none>;
@@ -178,9 +191,9 @@ using opengl_forward_compat =
 using opengl_debug_context =
     detail::key_value<GLFW_OPENGL_DEBUG_CONTEXT, bool, false>;
 enum class profile {
-    any = GLFW_OPENGL_ANY_PROFILE,
+    any    = GLFW_OPENGL_ANY_PROFILE,
     compat = GLFW_OPENGL_COMPAT_PROFILE,
-    core = GLFW_OPENGL_CORE_PROFILE
+    core   = GLFW_OPENGL_CORE_PROFILE
 };
 using opengl_profile =
     detail::key_value<GLFW_OPENGL_PROFILE, profile, profile::any>;
@@ -189,7 +202,7 @@ using cocoa_retina_framebufer =
 using cocoa_frame_name = detail::key_value_s<GLFW_COCOA_FRAME_NAME>;
 using cocoa_graphics_switching =
     detail::key_value<GLFW_COCOA_GRAPHICS_SWITCHING, bool, false>;
-using x11_class_name = detail::key_value_s<GLFW_X11_CLASS_NAME>;
+using x11_class_name    = detail::key_value_s<GLFW_X11_CLASS_NAME>;
 using x11_instance_name = detail::key_value_s<GLFW_X11_INSTANCE_NAME>;
 } // namespace window_hint
 struct window {
@@ -219,7 +232,7 @@ inline auto version_string() { return glfwGetVersionString(); }
 inline auto error()
 {
     struct {
-        int code;
+        int         code;
         char const *description;
     } error;
     error.code = glfwGetError(&error.description);
@@ -228,7 +241,7 @@ inline auto error()
 template <typename Fn> struct error_callback {
 private:
     inline static error_callback<Fn> *self;
-    Fn fn;
+    Fn                                fn;
 
 public:
     template <ErrorHandler Handler>
@@ -267,7 +280,7 @@ public:
     auto required_instance_extensions() const -> std::vector<char const *>
     {
         uint32_t count;
-        auto extensions = glfwGetRequiredInstanceExtensions(&count);
+        auto     extensions = glfwGetRequiredInstanceExtensions(&count);
         return std::vector<char const *>(extensions, extensions + count);
     }
     auto instance_proc_address() const -> PFN_vkGetInstanceProcAddr
@@ -284,7 +297,7 @@ concept ErrorHandler =
                    VkDebugUtilsMessengerCallbackDataEXT const *>;
 template <typename Fn> struct error_callback {
 private:
-    Fn fn;
+    Fn                               fn;
     vk::UniqueDebugUtilsMessengerEXT debug;
 
 public:
@@ -306,8 +319,8 @@ public:
 
 private:
     static VKAPI_ATTR VkBool32 VKAPI_CALL
-    callback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-             VkDebugUtilsMessageTypeFlagsEXT type,
+    callback(VkDebugUtilsMessageSeverityFlagBitsEXT      severity,
+             VkDebugUtilsMessageTypeFlagsEXT             type,
              VkDebugUtilsMessengerCallbackDataEXT const *data, void *user)
     {
         static_cast<error_callback<Fn> *>(user)->fn(
@@ -455,7 +468,8 @@ inline auto make_instance(Ts &&...ts) -> vk::UniqueInstance
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
     return instance;
 }
-inline auto query(vk::PhysicalDevice const &device, std::string_view name) {
+inline auto query(vk::PhysicalDevice const &device, std::string_view name)
+{
     auto props = device.enumerateDeviceExtensionProperties();
     for (auto const &prop : props) {
     }
@@ -471,11 +485,11 @@ inline constexpr auto filter(vk::PhysicalDeviceType type)
 template <typename ErrorHandler> struct app {
 private:
     glfw::instance win_instance = glfw::instance();
-    glfw::window win = glfw::window(
+    glfw::window   win          = glfw::window(
         win_instance.make_window(glfw::client_api{glfw::api::none}));
-    vk::UniqueInstance instance = debug_instance(win_instance);
-    vk::UniqueDevice device;
-    vk::UniqueSurfaceKHR surface;
+    vk::UniqueInstance                 instance = debug_instance(win_instance);
+    vk::UniqueDevice                   device;
+    vk::UniqueSurfaceKHR               surface;
     glfw::error_callback<ErrorHandler> glfw_cb;
     glfw::vulkan::error_callback<ErrorHandler> vk_cb;
 

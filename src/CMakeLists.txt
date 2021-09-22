@@ -24,7 +24,10 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
   set(CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std:c++latest")
   set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")
 endif()
-target_link_libraries(sonda PRIVATE imgui::vulkan imgui::glfw asio::asio Boost::describe)
+target_link_libraries(sonda
+  PRIVATE
+    imgui::vulkan imgui::glfw asio::asio Boost::describe fmt::fmt
+)
 
 if (WIN32)
   target_compile_definitions(sonda
