@@ -16,3 +16,9 @@ IndentCaseLabels: false
 Standard: Cpp11
 ColumnLimit: 80
 SortIncludes: false
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignOperands: AlignAfterOperator
+

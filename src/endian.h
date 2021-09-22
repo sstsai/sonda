@@ -1,4 +1,5 @@
 #pragma once
+#include "bytes.h"
 #include <bit>
 #include <cstdint>
 #include <type_traits>
@@ -117,4 +118,50 @@ inline constexpr auto reverse(T x) noexcept
     return std::bit_cast<T>(detail::endian_reverse_impl(
         std::bit_cast<detail::integral_by_size_t<sizeof(T)>>(x)));
 }
+template <typename T, std::endian Endian = std::endian::native>
+struct arithmetic {
+    static_assert(std::is_arithmetic_v<T>);
+    T value;
+    constexpr arithmetic() = default;
+    constexpr explicit arithmetic(T value) : value(value) {}
+
+private:
+    friend constexpr auto tag_invoke(bytes::to_fn, std::byte *ptr,
+                                     arithmetic<T, Endian> a) -> std::byte *
+    {
+        if constexpr (Endian == std::endian::native)
+            return bytes::to(ptr, a.value);
+        else {
+            return bytes::to(ptr, reverse(a.value));
+        }
+    }
+    friend constexpr auto tag_invoke(bytes::from_fn, std::byte const *ptr,
+                                     arithmetic<T, Endian> &a)
+        -> std::byte const *
+    {
+        if constexpr (Endian == std::endian::native)
+            return bytes::from(ptr, a.value);
+        else {
+            ptr = bytes::from(ptr, a.value);
+            a.value = reverse(a.value);
+            return ptr;
+        }
+    }
+};
+using be_int16  = arithmetic<int16_t, std::endian::big>;
+using be_int32  = arithmetic<int32_t, std::endian::big>;
+using be_int64  = arithmetic<int64_t, std::endian::big>;
+using be_uint16 = arithmetic<uint16_t, std::endian::big>;
+using be_uint32 = arithmetic<uint32_t, std::endian::big>;
+using be_uint64 = arithmetic<uint64_t, std::endian::big>;
+using be_float  = arithmetic<float, std::endian::big>;
+using be_double = arithmetic<double, std::endian::big>;
+using le_int16  = arithmetic<int16_t, std::endian::little>;
+using le_int32  = arithmetic<int32_t, std::endian::little>;
+using le_int64  = arithmetic<int64_t, std::endian::little>;
+using le_uint16 = arithmetic<uint16_t, std::endian::little>;
+using le_uint32 = arithmetic<uint32_t, std::endian::little>;
+using le_uint64 = arithmetic<uint64_t, std::endian::little>;
+using le_float  = arithmetic<float, std::endian::little>;
+using le_double = arithmetic<double, std::endian::little>;
 } // namespace endian
