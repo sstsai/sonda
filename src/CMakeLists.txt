@@ -26,7 +26,7 @@ if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
 endif()
 target_link_libraries(sonda
   PRIVATE
-    imgui::vulkan imgui::glfw asio::asio Boost::describe fmt::fmt
+    imgui::vulkan imgui::glfw asio::asio Boost::describe Boost::system fmt::fmt
 )
 
 if (WIN32)
