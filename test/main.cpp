@@ -1,6 +1,7 @@
 #include "mqtt.h"
 #include "tiff.h"
 #include "endian.h"
+#include "fmap.h"
 #include <cassert>
 #include <fstream>
 struct base {
@@ -62,9 +63,9 @@ auto test_tiff()
 }
 auto test_tiff16()
 {
-    std::array<std::byte, 2048>      buffer;
-    constexpr auto                   width  = uint32_t{256};
-    constexpr auto                   height = uint32_t{256};
+    std::array<std::byte, 2048>          buffer;
+    constexpr auto                       width  = uint32_t{256};
+    constexpr auto                       height = uint32_t{256};
     std::array<char, width * height * 2> image;
     std::iota(image.begin(), image.end(), uint8_t{0});
     auto ptr = tiff::header(buffer.data(), width * height * 2 + 8 + 16);
@@ -77,8 +78,71 @@ auto test_tiff16()
     ptr = bytes::to(ptr, uint32_t{0});
     ofs.write(reinterpret_cast<char *>(buffer.data()), ptr - buffer.data());
 }
+auto test_ap()
+{
+    using namespace func;
+    auto sum = [](auto a) { return a + 2; };
+    auto mul = [](auto a) { return a * 2; };
+    {
+        auto r = apply(std::optional<int>(5), std::optional(sum),
+                       std::optional(sum));
+        assert(r.value() == 9);
+    }
+    {
+        auto r = apply(std::vector<float>{1.5f, 3.5f, 5.5f},
+                       std::vector<std::function<float(float)>>{sum, mul});
+        assert(r[0] == 3.5f);
+        assert(r[1] == 5.5f);
+        assert(r[2] == 7.5f);
+        assert(r[3] == 3.0f);
+        assert(r[4] == 7.0f);
+        assert(r[5] == 11.0f);
+    }
+}
+auto test_fmap()
+{
+    using namespace func;
+    auto sum = [](auto a) { return a + 2; };
+    {
+        auto r = fmap(std::optional<int>(5), sum, sum);
+        assert(r.value() == 9);
+        r = fmap(std::optional<int>(), sum, sum);
+        assert(!r);
+    }
+    auto rv = fmap(std::vector<float>{1.5f, 3.5f, 5.5f}, sum, sum);
+    assert(rv[0] == 5.5f);
+    assert(rv[1] == 7.5f);
+    assert(rv[2] == 9.5f);
+    auto v = fmap(std::variant<double, std::error_code>(5.0), sum, sum);
+    assert(std::get<0>(v) == 9.0);
+    v = fmap(std::variant<double, std::error_code>(std::error_code{}), sum,
+             sum);
+    assert(!std::get<1>(v));
+}
+auto test_bind()
+{
+    {
+        auto sum = [](auto a) -> std::optional<int> { return a + 2; };
+        auto r   = func::bind(std::optional<int>(5), sum, sum);
+        assert(r.value() == 9);
+        r = func::bind(std::optional<int>(), sum, sum);
+        assert(!r);
+    }
+    {
+        auto sum = [](float a) -> std::vector<float> {
+            return std::vector<float>{a + 2.0f};
+        };
+        auto r = func::bind(std::vector<float>{1.5f, 3.5f, 5.5f}, sum, sum);
+        assert(r[0] == 5.5f);
+        assert(r[1] == 7.5f);
+        assert(r[2] == 9.5f);
+    }
+}
 int main(int ac, char **av)
 {
+    test_fmap();
+    test_bind();
+    test_ap();
     test_serial();
     test_tiff();
     test_tiff16();

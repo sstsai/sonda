@@ -8,6 +8,7 @@ add_subdirectory(glfw)
 add_subdirectory(vulkan-headers)
 add_subdirectory(fmt)
 add_subdirectory(boost)
+add_subdirectory(tuplet)
 
 # asio
 add_library(asio INTERFACE)

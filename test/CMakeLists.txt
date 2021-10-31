@@ -9,7 +9,7 @@ target_include_directories(sonda-test PRIVATE
 )
 target_link_libraries(sonda-test
   PRIVATE
-    asio::asio Boost::describe
+    asio::asio Boost::describe Boost::system
 )
 target_compile_definitions(sonda-test
   PUBLIC
