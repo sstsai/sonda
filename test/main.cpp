@@ -109,10 +109,20 @@ auto test_fmap()
         r = fmap(std::optional<int>(), sum, sum);
         assert(!r);
     }
-    auto rv = fmap(std::vector<float>{1.5f, 3.5f, 5.5f}, sum, sum);
-    assert(rv[0] == 5.5f);
-    assert(rv[1] == 7.5f);
-    assert(rv[2] == 9.5f);
+    {
+        auto rv = fmap(std::vector<float>{1.5f, 3.5f, 5.5f}, sum, sum);
+        assert(rv[0] == 5.5f);
+        assert(rv[1] == 7.5f);
+        assert(rv[2] == 9.5f);
+    }
+    {
+        using namespace std::placeholders;
+        auto rv = chain(std::vector<float>{1.5f, 3.5f, 5.5f},
+                        std::bind(fmap, _1, sum), std::bind(fmap, _1, sum));
+        assert(rv[0] == 5.5f);
+        assert(rv[1] == 7.5f);
+        assert(rv[2] == 9.5f);
+    }
     auto v = fmap(std::variant<double, std::error_code>(5.0), sum, sum);
     assert(std::get<0>(v) == 9.0);
     v = fmap(std::variant<double, std::error_code>(std::error_code{}), sum,

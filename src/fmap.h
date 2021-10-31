@@ -171,4 +171,14 @@ inline constexpr struct bind_fn {
             return (*this)(result, std::forward<Args>(args)...);
     }
 } bind{};
+
+template <typename T, std::regular_invocable<T> Fn, typename ...Args>
+inline constexpr auto chain(T &&value, Fn &&fn, Args &&...args)
+{
+    auto result = std::forward<Fn>(fn)(value);
+    if constexpr (sizeof...(Args) == 0)
+        return result;
+    else
+        return chain(result, std::forward<Args>(args)...);
+}
 } // namespace func
