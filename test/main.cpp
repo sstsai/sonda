@@ -13,7 +13,7 @@ struct test : base {
     float b;
 };
 BOOST_DESCRIBE_STRUCT(test, (base), (a, b))
-auto test_serial()
+void test_serial()
 {
     std::array<std::byte, 2048> buffer;
     using namespace bytes;
@@ -44,7 +44,7 @@ auto test_serial()
     assert(t.a == 6);
     assert(t.b == 1.2f);
 }
-auto test_tiff()
+void test_tiff()
 {
     std::array<std::byte, 2048>      buffer;
     constexpr auto                   width  = uint32_t{256};
@@ -61,7 +61,7 @@ auto test_tiff()
     ptr = bytes::to(ptr, uint32_t{0});
     ofs.write(reinterpret_cast<char *>(buffer.data()), ptr - buffer.data());
 }
-auto test_tiff16()
+void test_tiff16()
 {
     std::array<std::byte, 2048>          buffer;
     constexpr auto                       width  = uint32_t{256};
@@ -78,7 +78,7 @@ auto test_tiff16()
     ptr = bytes::to(ptr, uint32_t{0});
     ofs.write(reinterpret_cast<char *>(buffer.data()), ptr - buffer.data());
 }
-auto test_ap()
+void test_ap()
 {
     using namespace func;
     auto sum = [](auto a) { return a + 2; };
@@ -99,7 +99,7 @@ auto test_ap()
         assert(r[5] == 11.0f);
     }
 }
-auto test_fmap()
+void test_fmap()
 {
     using namespace func;
     auto sum = [](auto a) { return a + 2; };
@@ -115,21 +115,8 @@ auto test_fmap()
         assert(rv[1] == 7.5f);
         assert(rv[2] == 9.5f);
     }
-    {
-        using namespace std::placeholders;
-        auto rv = chain(std::vector<float>{1.5f, 3.5f, 5.5f},
-                        std::bind(fmap, _1, sum), std::bind(fmap, _1, sum));
-        assert(rv[0] == 5.5f);
-        assert(rv[1] == 7.5f);
-        assert(rv[2] == 9.5f);
-    }
-    auto v = fmap(std::variant<double, std::error_code>(5.0), sum, sum);
-    assert(std::get<0>(v) == 9.0);
-    v = fmap(std::variant<double, std::error_code>(std::error_code{}), sum,
-             sum);
-    assert(!std::get<1>(v));
 }
-auto test_bind()
+void test_bind()
 {
     {
         auto sum = [](auto a) -> std::optional<int> { return a + 2; };

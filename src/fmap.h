@@ -17,6 +17,7 @@ concept range = requires(C &c)
     std::back_inserter(c);
 };
 // clang-format on
+
 inline constexpr struct apply_fn {
     template <template <typename...> typename Sequence, typename T,
               typename... Ts, std::regular_invocable<T> Fn, typename... Us>
@@ -80,16 +81,6 @@ inline constexpr struct fmap_fn {
         else
             return {};
     }
-    template <typename T, typename E, std::regular_invocable<T> Fn>
-    friend constexpr auto tag_invoke(fmap_fn, std::variant<T, E> const &a,
-                                     Fn &&fn) noexcept
-        -> std::variant<std::invoke_result_t<Fn, T>, E>
-    {
-        if (auto *val = std::get_if<0>(&a))
-            return std::forward<decltype(fn)>(fn)(*val);
-        else
-            return std::get<1>(a);
-    }
     template <template <typename...> typename Functor, typename T,
               typename... Ts, std::regular_invocable<T> Fn, typename... Args>
     constexpr auto operator()(Functor<T, Ts...> const &f, Fn &&fn,
@@ -130,17 +121,6 @@ inline constexpr struct flatten_fn {
         else
             return {};
     }
-    template <typename T, typename E>
-    friend constexpr auto
-    tag_invoke(flatten_fn,
-               std::variant<std::variant<T, E>, E> const &a) noexcept
-        -> std::variant<T, E>
-    {
-        if (auto *val = std::get_if<0>(&a))
-            return *val;
-        else
-            return std::get<1>(a);
-    }
     template <template <typename...> typename Functor, typename T,
               typename... Ts>
     constexpr auto operator()(Functor<T, Ts...> const &f) const noexcept
@@ -171,14 +151,4 @@ inline constexpr struct bind_fn {
             return (*this)(result, std::forward<Args>(args)...);
     }
 } bind{};
-
-template <typename T, std::regular_invocable<T> Fn, typename ...Args>
-inline constexpr auto chain(T &&value, Fn &&fn, Args &&...args)
-{
-    auto result = std::forward<Fn>(fn)(value);
-    if constexpr (sizeof...(Args) == 0)
-        return result;
-    else
-        return chain(result, std::forward<Args>(args)...);
-}
 } // namespace func
