@@ -2,6 +2,7 @@
 #include "tiff.h"
 #include "endian.h"
 #include "fmap.h"
+#include "strong_type.h"
 #include <cassert>
 #include <fstream>
 struct base {
@@ -135,6 +136,22 @@ void test_bind()
         assert(r[2] == 9.5f);
     }
 }
+void test_strong()
+{
+    using test = strong::base<float, struct test, std::ratio<1>,
+                              strong::operations::addable,
+                              strong::operations::subtractable>;
+    test a(5.0f);
+    test b(2.0f);
+    auto c = a + b;
+    assert(c.count() == 7.0f);
+    a += b;
+    assert(a.count() == 7.0f);
+    c = a - b;
+    assert(c.count() == 5.0f);
+    a -= b;
+    assert(a.count() == 5.0f);
+}
 int main(int ac, char **av)
 {
     test_fmap();
@@ -143,4 +160,5 @@ int main(int ac, char **av)
     test_serial();
     test_tiff();
     test_tiff16();
+    test_strong();
 }
