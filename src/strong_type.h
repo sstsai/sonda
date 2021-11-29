@@ -11,6 +11,7 @@ struct subtractable {};
 struct multipliable {};
 struct dividable {};
 } // namespace operations
+inline namespace concepts {
 // clang-format off
 template <typename T>
 concept Type = requires(T a)
@@ -56,6 +57,8 @@ concept Dividable = Type<T> &&
     {a.count() / b.count()} -> std::convertible_to<typename T::rep>;
 };
 // clang-format on
+} // namespace concepts
+inline namespace types {
 template <class T, class Unit, class Scalar = std::ratio<1>,
           class... Operations>
 struct base {
@@ -103,6 +106,7 @@ template <Dividable T> constexpr auto operator/=(T &a, T const &b) -> T &
     a.value /= b.count();
     return a;
 }
+} // namespace types
 } // namespace strong
 namespace si {
 namespace name {

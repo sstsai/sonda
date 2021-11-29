@@ -11,7 +11,7 @@ target_sources(sonda
     "fmap.h"
     "endian.h"
     "bytes.h"
- )
+    "widgets.h")
 target_link_libraries(sonda
   PRIVATE
 )
