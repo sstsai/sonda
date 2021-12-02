@@ -3,6 +3,8 @@
 #include "endian.h"
 #include "fmap.h"
 #include "strong_type.h"
+#include "gui.h"
+#include "widgets.h"
 #include <cassert>
 #include <fstream>
 struct base {
@@ -152,6 +154,18 @@ void test_strong()
     a -= b;
     assert(a.count() == 5.0f);
 }
+void test_widgets()
+{
+    auto app = gui::app();
+    while (!app.should_close()) {
+        auto scoped_frame = gui::frame(app);
+        using namespace widget;
+        ImGui::Begin("test widgets");
+        stack{label("hello world"), rect(colors::red)}.render(
+            window_bounds());
+        ImGui::End();
+    }
+}
 int main(int ac, char **av)
 {
     test_fmap();
@@ -161,4 +175,5 @@ int main(int ac, char **av)
     test_tiff();
     test_tiff16();
     test_strong();
+    test_widgets();
 }
