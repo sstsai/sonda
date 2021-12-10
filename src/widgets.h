@@ -3,13 +3,13 @@
 #include <boost/mp11.hpp>
 #include <algorithm>
 #include <tuple>
+#include <concepts>
 namespace widget {
+inline namespace types {
 struct vec2 {
-    float x;
-    float y;
-    constexpr vec2() : vec2(0.0f, 0.0f) {}
-    constexpr vec2(float x) : vec2(x, 0.0f) {}
-    constexpr vec2(float x, float y) : x(x), y(y) {}
+    float x = 0.0f;
+    float y = 0.0f;
+
     operator ImVec2() const { return ImVec2(x, y); }
 
 private:
@@ -18,24 +18,69 @@ private:
         return vec2{a.x + b.x, a.y + b.y};
     }
 };
-inline auto to_vec(ImVec2 v) -> vec2 { return vec2{v.x, v.y}; }
 struct bounds {
     vec2           ul;
     vec2           lr;
     constexpr auto width() const { return lr.x - ul.x; }
     constexpr auto height() const { return lr.y - ul.y; }
+
+    operator ImRect() const { return ImRect(ul, lr); }
 };
+inline auto to_vec(ImVec2 v) -> vec2 { return vec2{v.x, v.y}; }
+} // namespace types
+inline namespace cpos {
+// clang-format off
+template <typename T>
+concept has_member_size = requires(T a)
+{
+    {a.size()} -> std::convertible_to<vec2>;
+};
+template <typename T>
+concept has_member_render = requires(T a)
+{
+    a.render(bounds{});
+};
+template <typename... Ts>
+concept tag_invocable = requires(Ts&&... ts)
+{
+    {tag_invoke(std::forward<Ts>(ts)...)} -> std::convertible_to<vec2>;
+};
+// clang-format on
+inline constexpr struct size_t {
+    template <typename Widget>
+    constexpr auto operator()(Widget &&w) const noexcept -> vec2
+    {
+        if constexpr (has_member_size<Widget>) {
+            return w.size();
+        } else if constexpr (tag_invocable<size_t, Widget>) {
+            return tag_invoke(*this, std::forward<Widget>(w));
+        } else {
+            return vec2();
+        }
+    }
+} size;
+inline constexpr struct render_t {
+    template <typename Widget>
+    constexpr void operator()(Widget &&w, bounds const &b) const noexcept
+    {
+        if constexpr (has_member_render<Widget>) {
+            w.render(b);
+        } else if constexpr (tag_invocable<render_t, Widget>) {
+            tag_invoke(*this, std::forward<Widget>(w), b);
+        }
+    }
+} render;
+} // namespace cpos
+inline namespace helpers {
 inline auto window_bounds() -> bounds
 {
     auto pos = to_vec(ImGui::GetCursorScreenPos());
     return {pos, pos + to_vec(ImGui::GetContentRegionAvail())};
 }
+} // namespace helpers
+inline namespace base {
 struct spacer {
-    vec2 size_;
-    constexpr spacer() : size_() {}
-    constexpr spacer(float x) : size_(x) {}
-    constexpr spacer(float x, float y) : size_(x, y) {}
-    constexpr void render(bounds const &r) const {}
+    vec2           size_;
     constexpr auto size() const -> vec2 { return size_; }
 };
 struct label {
@@ -63,7 +108,6 @@ struct rect {
         ImGui::GetWindowDrawList()->AddRect(r.ul, r.lr, color, rounding, flags,
                                             thickness);
     }
-    constexpr auto size() const -> vec2 { return {}; }
 };
 struct filled_rect {
     ImU32       color;
@@ -104,6 +148,7 @@ struct circle_filled {
     }
     constexpr auto size() const -> vec2 { return {}; }
 };
+} // namespace base
 namespace colors {
 constexpr ImU32 alice_blue             = IM_COL32(240, 248, 255, 255);
 constexpr ImU32 antique_white          = IM_COL32(250, 235, 215, 255);
@@ -430,14 +475,14 @@ template <typename... Ts> struct stack {
     constexpr void render(bounds const &r) const
     {
         boost::mp11::tuple_for_each(items, [this, &r](const auto &x) {
-            x.render({r.ul, r.ul + size()});
+            widget::render(x, {r.ul, r.ul + size()});
         });
     }
     constexpr auto size() const -> vec2
     {
         auto max = vec2();
         boost::mp11::tuple_for_each(items, [&max](const auto &x) mutable {
-            auto sz = x.size();
+            auto sz = widget::size(x);
             max     = vec2(std::max(max.x, sz.x), std::max(max.y, sz.y));
         });
         return max;

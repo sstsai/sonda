@@ -160,9 +160,10 @@ void test_widgets()
     while (!app.should_close()) {
         auto scoped_frame = gui::frame(app);
         using namespace widget;
+        constexpr auto s = size(spacer{{1.0f}});
         ImGui::Begin("test widgets");
-        stack{label("hello world"), rect(colors::red)}.render(
-            window_bounds());
+        render(stack{label("hello world"), rect(colors::red), spacer{{100.0f}}},
+               window_bounds());
         ImGui::End();
     }
 }
