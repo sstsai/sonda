@@ -13,10 +13,13 @@ Beman Dawes, Christopher Kohlhoff, Peter Dimov
 :toclevels: 4
 :idprefix:
 :docinfo: private-footer
+:source-highlighter: rouge
+:source-language: c++
 
 :leveloffset: +1
 
 include::system/introduction.adoc[]
+include::system/usage.adoc[]
 include::system/changes.adoc[]
 include::system/rationale.adoc[]
 include::system/reference.adoc[]

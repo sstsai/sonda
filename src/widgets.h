@@ -3,13 +3,13 @@
 #include <boost/mp11.hpp>
 #include <algorithm>
 #include <tuple>
+#include <concepts>
 namespace widget {
+inline namespace types {
 struct vec2 {
-    float x;
-    float y;
-    constexpr vec2() : vec2(0.0f, 0.0f) {}
-    constexpr vec2(float x) : vec2(x, 0.0f) {}
-    constexpr vec2(float x, float y) : x(x), y(y) {}
+    float x = 0.0f;
+    float y = 0.0f;
+
     operator ImVec2() const { return ImVec2(x, y); }
 
 private:
@@ -18,34 +18,79 @@ private:
         return vec2{a.x + b.x, a.y + b.y};
     }
 };
-inline auto to_vec(ImVec2 v) -> vec2 { return vec2{v.x, v.y}; }
 struct bounds {
-    vec2 ul;
-    vec2 lr;
+    vec2           ul;
+    vec2           lr;
     constexpr auto width() const { return lr.x - ul.x; }
     constexpr auto height() const { return lr.y - ul.y; }
+
+    operator ImRect() const { return ImRect(ul, lr); }
 };
+inline auto to_vec(ImVec2 v) -> vec2 { return vec2{v.x, v.y}; }
+} // namespace types
+inline namespace cpos {
+// clang-format off
+template <typename T>
+concept has_member_size = requires(T a)
+{
+    {a.size()} -> std::convertible_to<vec2>;
+};
+template <typename T>
+concept has_member_render = requires(T a)
+{
+    a.render(bounds{});
+};
+template <typename... Ts>
+concept tag_invocable = requires(Ts&&... ts)
+{
+    {tag_invoke(std::forward<Ts>(ts)...)} -> std::convertible_to<vec2>;
+};
+// clang-format on
+inline constexpr struct size_t {
+    template <typename Widget>
+    constexpr auto operator()(Widget &&w) const noexcept -> vec2
+    {
+        if constexpr (has_member_size<Widget>) {
+            return w.size();
+        } else if constexpr (tag_invocable<size_t, Widget>) {
+            return tag_invoke(*this, std::forward<Widget>(w));
+        } else {
+            return vec2();
+        }
+    }
+} size;
+inline constexpr struct render_t {
+    template <typename Widget>
+    constexpr void operator()(Widget &&w, bounds const &b) const noexcept
+    {
+        if constexpr (has_member_render<Widget>) {
+            w.render(b);
+        } else if constexpr (tag_invocable<render_t, Widget>) {
+            tag_invoke(*this, std::forward<Widget>(w), b);
+        }
+    }
+} render;
+} // namespace cpos
+inline namespace helpers {
 inline auto window_bounds() -> bounds
 {
     auto pos = to_vec(ImGui::GetCursorScreenPos());
     return {pos, pos + to_vec(ImGui::GetContentRegionAvail())};
 }
+} // namespace helpers
+inline namespace base {
 struct spacer {
-    vec2 size_;
-    constexpr spacer() : size_() {}
-    constexpr spacer(float x) : size_(x) {}
-    constexpr spacer(float x, float y) : size_(x, y) {}
-    constexpr void render(bounds const &r) const {}
+    vec2           size_;
     constexpr auto size() const -> vec2 { return size_; }
 };
 struct label {
-    char const *text;
-    ImU32 color                      = IM_COL32_WHITE;
-    ImFont *font                     = nullptr;
-    float font_size                  = 0.0f;
-    float wrap_width                 = 0.0f;
+    char const *  text;
+    ImU32         color              = IM_COL32_WHITE;
+    ImFont *      font               = nullptr;
+    float         font_size          = 0.0f;
+    float         wrap_width         = 0.0f;
     const ImVec4 *cpu_fine_clip_rect = nullptr;
-    void render(bounds const &r) const
+    void          render(bounds const &r) const
     {
         ImGui::GetWindowDrawList()->AddText(font, font_size, r.ul, color, text,
                                             nullptr, wrap_width,
@@ -54,23 +99,22 @@ struct label {
     auto size() const -> vec2 { return to_vec(ImGui::CalcTextSize(text)); }
 };
 struct rect {
-    ImU32 color;
-    float rounding    = 0.0f;
-    ImDrawFlags flags = ImDrawFlags_None;
-    float thickness   = 1.0f;
-    void render(bounds const &r) const
+    ImU32       color;
+    float       rounding  = 0.0f;
+    ImDrawFlags flags     = ImDrawFlags_None;
+    float       thickness = 1.0f;
+    void        render(bounds const &r) const
     {
         ImGui::GetWindowDrawList()->AddRect(r.ul, r.lr, color, rounding, flags,
                                             thickness);
     }
-    constexpr auto size() const -> vec2 { return {}; }
 };
 struct filled_rect {
-    ImU32 color;
-    float rounding    = 0.0f;
-    ImDrawFlags flags = ImDrawFlags_None;
-    auto calc(bounds const &r) const -> bounds { return r; }
-    void render(bounds const &r) const
+    ImU32       color;
+    float       rounding = 0.0f;
+    ImDrawFlags flags    = ImDrawFlags_None;
+    auto        calc(bounds const &r) const -> bounds { return r; }
+    void        render(bounds const &r) const
     {
         ImGui::GetWindowDrawList()->AddRectFilled(r.ul, r.lr, color, rounding,
                                                   flags);
@@ -79,10 +123,10 @@ struct filled_rect {
 };
 struct circle {
     ImU32 color;
-    int num_segments = 0;
-    float thickness  = 1.0f;
-    auto calc(bounds const &r) const -> bounds { return r; }
-    void render(bounds const &r) const
+    int   num_segments = 0;
+    float thickness    = 1.0f;
+    auto  calc(bounds const &r) const -> bounds { return r; }
+    void  render(bounds const &r) const
     {
         auto center = (r.lr + r.ul) / 2;
         auto radius = std::min(r.lr.x - r.ul.x, r.lr.y - r.ul.y) / 2;
@@ -93,9 +137,9 @@ struct circle {
 };
 struct circle_filled {
     ImU32 color;
-    int num_segments = 0;
-    auto calc(bounds const &r) const -> bounds { return r; }
-    void render(bounds const &r) const
+    int   num_segments = 0;
+    auto  calc(bounds const &r) const -> bounds { return r; }
+    void  render(bounds const &r) const
     {
         auto center = (r.lr + r.ul) / 2;
         auto radius = std::min(r.lr.x - r.ul.x, r.lr.y - r.ul.y) / 2;
@@ -104,6 +148,7 @@ struct circle_filled {
     }
     constexpr auto size() const -> vec2 { return {}; }
 };
+} // namespace base
 namespace colors {
 constexpr ImU32 alice_blue             = IM_COL32(240, 248, 255, 255);
 constexpr ImU32 antique_white          = IM_COL32(250, 235, 215, 255);
@@ -295,7 +340,7 @@ constexpr ImU32 gray[] = {
 } // namespace colors
 inline namespace align {
 template <typename T> struct align_left {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         widget.render({r.ul, vec2(r.ul.x + size().x, r.lr.y)});
@@ -303,7 +348,7 @@ template <typename T> struct align_left {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_center {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         auto half   = size().x / 2.0f;
@@ -314,7 +359,7 @@ template <typename T> struct align_center {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_right {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         widget.render({vec2(r.lr.x - size().x, r.ul.y), r.lr});
@@ -322,7 +367,7 @@ template <typename T> struct align_right {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_top {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         widget.render({r.ul, vec2{r.lr.x, r.ul.y + size().y}});
@@ -330,7 +375,7 @@ template <typename T> struct align_top {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_middle {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         auto half   = size().y / 2.0f;
@@ -341,7 +386,7 @@ template <typename T> struct align_middle {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_bottom {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         widget.render({vec2(r.ul.x, r.lr.y - size().y), r.lr});
@@ -349,7 +394,7 @@ template <typename T> struct align_bottom {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_left_top {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_left{align_top{widget}}.render(r);
@@ -357,7 +402,7 @@ template <typename T> struct align_left_top {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_center_top {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_center{align_top{widget}}.render(r);
@@ -365,7 +410,7 @@ template <typename T> struct align_center_top {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_right_top {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_right{align_top{widget}}.render(r);
@@ -373,7 +418,7 @@ template <typename T> struct align_right_top {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_left_middle {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_left{align_middle{widget}}.render(r);
@@ -381,7 +426,7 @@ template <typename T> struct align_left_middle {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_center_middle {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_center{align_middle{widget}}.render(r);
@@ -389,7 +434,7 @@ template <typename T> struct align_center_middle {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_right_middle {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_right{align_middle{widget}}.render(r);
@@ -397,7 +442,7 @@ template <typename T> struct align_right_middle {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_left_bottom {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_left{align_bottom{widget}}.render(r);
@@ -405,7 +450,7 @@ template <typename T> struct align_left_bottom {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_center_bottom {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_center{align_bottom{widget}}.render(r);
@@ -413,7 +458,7 @@ template <typename T> struct align_center_bottom {
     constexpr auto size() const -> vec2 { return widget.size(); }
 };
 template <typename T> struct align_right_bottom {
-    T widget;
+    T              widget;
     constexpr void render(bounds const &r) const
     {
         align_right{align_bottom{widget}}.render(r);
@@ -429,14 +474,15 @@ template <typename... Ts> struct stack {
     constexpr stack(Ts &&...ts) : items{ts...} {}
     constexpr void render(bounds const &r) const
     {
-        boost::mp11::tuple_for_each(items,
-                                    [&r](const auto &x) { x.render(r); });
+        boost::mp11::tuple_for_each(items, [this, &r](const auto &x) {
+            widget::render(x, {r.ul, r.ul + size()});
+        });
     }
     constexpr auto size() const -> vec2
     {
         auto max = vec2();
         boost::mp11::tuple_for_each(items, [&max](const auto &x) mutable {
-            auto sz = x.size();
+            auto sz = widget::size(x);
             max     = vec2(std::max(max.x, sz.x), std::max(max.y, sz.y));
         });
         return max;

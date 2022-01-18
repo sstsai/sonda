@@ -4,13 +4,13 @@ target_sources(sonda-test
     main.cpp
     ../src/gui.cpp
 )
-target_include_directories(sonda-test PRIVATE
+target_include_directories(sonda-test PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(sonda-test
   PRIVATE
-    asio::asio Boost::describe Boost::system imgui::vulkan imgui::glfw
+    imgui::vulkan imgui::glfw asio::asio Boost::describe Boost::system fmt::fmt
 )
 target_compile_definitions(sonda-test
   PUBLIC

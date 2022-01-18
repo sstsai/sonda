@@ -70,7 +70,7 @@ struct test {
 
 int main(int ac, char **av)
 {
-    if (true) {
+    if (false) {
         logger log;
         auto a = app(log);
         return 0;

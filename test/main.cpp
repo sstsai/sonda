@@ -178,5 +178,4 @@ int main(int ac, char **av)
     test_tiff();
     test_tiff16();
     test_strong();
-    test_widget();
 }
