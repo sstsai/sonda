@@ -1,7 +1,8 @@
 add_executable(sonda-test "")
 target_sources(sonda-test
   PRIVATE
-    "main.cpp"
+    main.cpp
+    ../src/gui.cpp
 )
 target_include_directories(sonda-test PRIVATE
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
@@ -9,14 +10,17 @@ target_include_directories(sonda-test PRIVATE
 )
 target_link_libraries(sonda-test
   PRIVATE
-    asio::asio Boost::describe Boost::system
+    asio::asio Boost::describe Boost::system imgui::vulkan imgui::glfw
 )
 target_compile_definitions(sonda-test
   PUBLIC
     _USE_MATH_DEFINES
 )
 target_compile_features(sonda-test PUBLIC cxx_std_20)
-
+if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.12.25835)
+  set(CMAKE_CXX20_STANDARD_COMPILE_OPTION "-std:c++latest")
+  set(CMAKE_CXX20_EXTENSION_COMPILE_OPTION "-std:c++latest")
+endif()
 if (WIN32)
   target_compile_definitions(sonda-test
     PUBLIC
