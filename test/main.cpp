@@ -154,18 +154,20 @@ void test_strong()
     a -= b;
     assert(a.count() == 5.0f);
 }
-void test_widgets()
+void test_widget()
 {
-    //auto app = gui::app();
-    //while (!app.should_close()) {
-    //    auto scoped_frame = gui::frame(app);
-    //    using namespace widget;
-    //    constexpr auto s = size(spacer{{1.0f}});
-    //    ImGui::Begin("test widgets");
-    //    render(stack{label("hello world"), rect(colors::red), spacer{{100.0f}}},
-    //           window_bounds());
-    //    ImGui::End();
-    //}
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    auto   app         = gui::app();
+    while (!app.should_close()) {
+        auto scoped_frame = gui::frame(app, clear_color);
+        using namespace widget;
+        ImGui::Begin("test widgets");
+        auto bounds = window_bounds();
+        align_center_middle{
+            stack(label("Hello World"), rect(colors::dark_goldenrod))}
+            .render(bounds);
+        ImGui::End();
+    }
 }
 int main(int ac, char **av)
 {
@@ -176,5 +178,4 @@ int main(int ac, char **av)
     test_tiff();
     test_tiff16();
     test_strong();
-    test_widgets();
 }

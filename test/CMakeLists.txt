@@ -1,7 +1,8 @@
 add_executable(sonda-test "")
 target_sources(sonda-test
   PRIVATE
-    "main.cpp"
+    main.cpp
+    ../src/gui.cpp
 )
 target_include_directories(sonda-test PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
